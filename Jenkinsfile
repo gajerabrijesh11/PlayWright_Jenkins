@@ -1,26 +1,21 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS' // Make sure NodeJS tool is configured under Manage Jenkins → Global Tool Configuration
-    }
-
-    environment {
-        PATH = "$PATH:node_modules/.bin"
-    }
-
     stages {
         stage('Checkout') {
             steps {
                 echo '📥 Checking out source code...'
-                git branch: 'main', credentialsId: 'github-token', url: 'https://github.com/yourname/playwright-tests.git'
+                git branch: 'main', credentialsId: 'github-token', url: 'https://github.com/gajerabrijesh11/PlayWright_Jenkins.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Node.js') {
             steps {
-                echo '📦 Installing dependencies...'
-                sh 'npm ci'
+                echo '🔧 Installing Node.js dependencies...'
+                sh '''
+                    node -v || curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs
+                    npm ci
+                '''
             }
         }
 
@@ -38,16 +33,13 @@ pipeline {
             }
         }
 
-        stage('Publish Reports') {
+        stage('Publish HTML Report') {
             steps {
-                echo '🌐 Publishing reports...'
+                echo '🌐 Publishing Allure report...'
                 publishHTML(target: [
                     reportDir: 'allure-report',
                     reportFiles: 'index.html',
-                    reportName: 'Allure Test Report',
-                    keepAll: true,
-                    alwaysLinkToLastBuild: true,
-                    allowMissing: true
+                    reportName: 'Allure Test Report'
                 ])
             }
         }
@@ -55,10 +47,10 @@ pipeline {
 
     post {
         always {
-            echo "✅ Pipeline completed. Allure report available in the Jenkins build page."
+            echo "✅ Pipeline completed."
         }
         failure {
-            echo "❌ Build failed! Check logs for more details."
+            echo "❌ Pipeline failed. Check logs for more info."
         }
     }
 }
